@@ -15,20 +15,14 @@ internal class ThinkingEngine()
         var validationResult = ValidateThoughtData(input);
         if (validationResult is Failure<ThoughtData> failure)
             return Result.Failure<ThoughtResponse>(failure.Error);
-        var adjustedInput = input switch
-        {
-            RegularThought rt => rt with { TotalThoughts = Math.Max(rt.TotalThoughts, rt.ThoughtNumber) },
-            RevisionThought rev => rev with { TotalThoughts = Math.Max(rev.TotalThoughts, rev.ThoughtNumber) },
-            BranchThought br => br with { TotalThoughts = Math.Max(br.TotalThoughts, br.ThoughtNumber) },
-            _ => input
-        };
+        var adjustedInput = input with { TotalThoughts = Math.Max(input.TotalThoughts, input.ThoughtNumber) };
 
         _thoughtHistory.Add(adjustedInput);
         Interlocked.Increment(ref _thoughtCount);
-        if (adjustedInput is BranchThought branchThought)
+        if (adjustedInput.IsBranch)
         {
             _branches.AddOrUpdate(
-                branchThought.BranchId,
+                adjustedInput.BranchId!,
                 _ => new ConcurrentBag<ThoughtData> { adjustedInput },
                 (_, existing) =>
                 {

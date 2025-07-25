@@ -67,18 +67,10 @@ internal static class ThinkingTool
         int? revisesThought,
         int? branchFromThought,
         string? branchId,
-        bool? needsMoreThoughts)
+        bool? needsMoreThoughts) => (isRevision, revisesThought, branchFromThought, branchId) switch
     {
-        if (isRevision == true && revisesThought.HasValue)
-        {
-            return new RevisionThought(thought, thoughtNumber, totalThoughts, nextThoughtNeeded, revisesThought.Value);
-        }
-
-        if (branchFromThought.HasValue && !string.IsNullOrEmpty(branchId))
-        {
-            return new BranchThought(thought, thoughtNumber, totalThoughts, nextThoughtNeeded, branchFromThought.Value, branchId);
-        }
-
-        return new RegularThought(thought, thoughtNumber, totalThoughts, nextThoughtNeeded, needsMoreThoughts ?? true);
-    }
+        (true, not null, _, _) => new RevisionThought(thought, thoughtNumber, totalThoughts, nextThoughtNeeded, revisesThought.Value),
+        (_, _, not null, { Length: > 0 }) => new BranchThought(thought, thoughtNumber, totalThoughts, nextThoughtNeeded, branchFromThought.Value, branchId),
+        _ => new RegularThought(thought, thoughtNumber, totalThoughts, nextThoughtNeeded, needsMoreThoughts ?? true)
+    };
 }

@@ -47,18 +47,12 @@ internal class ThinkingEngine()
         );
     }
 
-    private static Result<ThoughtData> ValidateThoughtData(ThoughtData input)
+    private static Result<ThoughtData> ValidateThoughtData(ThoughtData input) => input switch
     {
-        if (string.IsNullOrWhiteSpace(input.Thought))
-            return Result.Failure<ThoughtData>("Invalid thought: must be a non-empty string");
-
-        if (input.ThoughtNumber < 1)
-            return Result.Failure<ThoughtData>("Invalid thoughtNumber: must be a positive number");
-
-        if (input.TotalThoughts < 1)
-            return Result.Failure<ThoughtData>("Invalid totalThoughts: must be a positive number");
-
-        return Result.Success(input);
-    }
+        { Thought: var t } when string.IsNullOrWhiteSpace(t) => Result.Failure<ThoughtData>("Invalid thought: must be a non-empty string"),
+        { ThoughtNumber: var n } when n < 1 => Result.Failure<ThoughtData>("Invalid thoughtNumber: must be a positive number"),
+        { TotalThoughts: var tt } when tt < 1 => Result.Failure<ThoughtData>("Invalid totalThoughts: must be a positive number"),
+        _ => Result.Success(input)
+    };
 
 }

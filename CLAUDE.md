@@ -167,6 +167,19 @@ public Result<TOut> Map<TOut>(Func<T, TOut> mapper) => this switch
 - Prefer `ValueTask<T>` over `Task<T>` for frequently synchronous operations
 - Use source generators over reflection
 
+**DRY Principle & Record Design**
+- Eliminate parameter repetition in record hierarchies
+- Use single record with optional properties over inheritance when appropriate
+- Add factory methods for clean object creation
+- Prefer composition over inheritance for data containers
+
+**Pattern Matching Guidelines**
+- Use switch expressions for discriminated unions and complex matching
+- Use if statements for simple validation and sequential checks
+- Use `when` guards for complex conditions in switch expressions
+- Property patterns (`{ Length: > 0 }`) are clearer than `not null and not ""`
+- Don't sacrifice correctness (stack traces) for "modern" syntax
+
 ## Project Configuration
 
 ```xml
@@ -187,17 +200,58 @@ dotnet format    # Format code
 dotnet build     # Build and analyze
 ```
 
+## Modern Record Patterns
+
+```csharp
+// ❌ Repetitive inheritance
+internal abstract record BaseData(string Name, int Id, bool IsActive);
+internal sealed record UserData(string Name, int Id, bool IsActive, string Email) : BaseData(Name, Id, IsActive);
+internal sealed record AdminData(string Name, int Id, bool IsActive, string[] Permissions) : BaseData(Name, Id, IsActive);
+
+// ✅ Single record with optional properties
+internal record EntityData(
+    string Name,
+    int Id, 
+    bool IsActive
+)
+{
+    public string? Email { get; init; }          // For users
+    public string[]? Permissions { get; init; }  // For admins
+    
+    // Pattern matching helpers
+    public bool IsUser => Email is not null;
+    public bool IsAdmin => Permissions is not null;
+    
+    // Factory methods
+    public static EntityData User(string name, int id, bool isActive, string email) =>
+        new(name, id, isActive) { Email = email };
+        
+    public static EntityData Admin(string name, int id, bool isActive, string[] permissions) =>
+        new(name, id, isActive) { Permissions = permissions };
+}
+
+// Usage with pattern matching
+var result = entity switch
+{
+    { IsUser: true, Email: var email } => ProcessUser(email),
+    { IsAdmin: true, Permissions: var perms } => ProcessAdmin(perms), 
+    _ => ProcessDefault()
+};
+```
+
 ## Quick Decision Matrix
 
 **When to use:**
 - `record` → Data containers, DTOs, value objects
 - `class` → Services, complex behavior, inheritance
 - `struct` → Small value types, performance-critical
-- `switch` expression → Multiple conditions, pattern matching
-- `if` statement → Simple boolean logic, early returns
+- `switch` expression → Discriminated unions, complex matching, multiple conditions
+- `if` statement → Simple validation, sequential checks, early returns
 - `Result<T>` → Expected failures, validation
 - `Exception` → Unexpected failures, system errors
 - `async/await` → I/O operations, network calls
 - `Task.Run` → CPU-bound work (rare, prefer async APIs)
+- Single record + optional properties → When inheritance creates parameter repetition
+- Traditional inheritance → When behavior differs significantly between types
 
 This reference prioritizes patterns you'll use 80% of the time, with quick access to advanced features when needed.

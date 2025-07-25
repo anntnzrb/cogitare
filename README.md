@@ -50,7 +50,8 @@ The think tool is designed for:
         "run",
         "--rm",
         "-i",
-        "cogitare"
+        "--init",
+        "ghcr.io/anntnzrb/cogitare:latest"
       ]
     }
   }
